@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>List countries</title>
+    <meta charset="utf-8"/>
+    <link type="text/css" rel="stylesheet" th:href="@{/css/style.css}"/>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+    <script src="http://code.jquery.com/jquery-latest.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBzMI-hInKpeR59ICzVVR2-A3WynrWcDuI&callback=initMap"async defer></script>
+    <script type="text/javascript" th:src="@{/js/jquery.easyPaginate.js}"></script>
+
+</head>
+
+<div id="wrapper">
+    <div id="header">
+        <h2>Страны и города</h2>
+    </div>
+</div>
+
+<div id="container">
+
+    <div id="content">
+
+        <form class="button" th:action="@{/country/showFormForAdd}" method="GET">
+            <input type="submit" value="Добавить страну" class="add-button"/>
+        </form>
+
+        <table>
+            <tr>
+                <th>Страна</th>
+            </tr>
+            <th:block th:each="tempCountry : ${countries}">
+                <tr>
+                    <td th:text="${tempCountry.name}"> </td>
+                    <td>
+                        <a th:href="@{'/country/showFormForUpdate/' + ${tempCountry.id}}">Изменить</a>
+                        |
+                        <a th:href="@{'/country/delete/' + ${tempCountry.id}}"
+                           onclick="if (!(confirm('Удалить выбранную страну?'))) return false">Удалить</a>
+                        |
+                        <a th:href="@{'/country/showCityFormForAdd/' + ${tempCountry.id}}">Добавить город</a>
+                    </td>
+                </tr>
+            </tr>
+            </th:block>
+        </table>
+
+    </div>
+
+    <div><br></div>
+
+    <div id="map" style="width: 600px; height: 400px; float: left; margin-right: 15px"></div>
+
+    <form name="myform">
+        Город
+        <input type="text" name="countryLetters" id="countryLetters" onkeyup="processCountryLetters()">
+        <input type="button" value="поиск" onclick="processCountryLetters()">
+    </form>
+
+    <div><br></div>
+
+    <select name="country" id="country">
+        <option value="header">Выберите страну</option>
+        <option th:each="country : ${countries}"
+                th:value="${country.id}"
+                th:text="${country.name}"></option>
+    </select>
+
+    <div id="cityList" ></div>
+
+</div>
+
+</body>
+
+<script type="text/javascript">
+
+    function processCountryLetters() {
+
+        var theseLetters = $("#countryLetters").val();
+
+        $.ajax({
+            url: 'matching',
+            type: "GET",
+            data: ({name: theseLetters}),
+            dataType: "json",
+            success: function(cities) {
+                clearPage();
+                pagination(cities);
+            }
+        });
+    }
+
+    $(document).ready(function(){
+
+        $('#country').change (function() {
+
+            var e = document.getElementById("country");
+            var countryId = e.options[e.selectedIndex].value;
+            $('select > option:first').hide();
+
+            $.ajax({
+                url: 'cities',
+                type: "GET",
+                data: ({name: countryId}),
+                dataType: "json",
+                success: function(cities) {
+                    //console.log(cities);
+                    if(cities != null) {
+                        clearPage();
+                        pagination(cities);
+                    }
+                }
+            });
+        });
+    });
+
+    function putMarker(theCity) {
+
+        geocoder.geocode( { 'address': theCity}, function(results, status) {
+            if (status == 'OK') {
+                map.setCenter(results[0].geometry.location);
+                var marker = new google.maps.Marker({
+                    map: map,
+                    position: results[0].geometry.location,
+                    title: theCity
+                });
+                markers.push(marker);
+            } else {
+                alert('Geocode was not successful for the following reason: ' + status);
+            }
+        });
+    }
+
+    function clearPage() {
+
+        $("#cityList").html("");
+        $(".easyPaginateNav").remove();
+        for (var i = 0; i < markers.length; i++) {
+            markers[i].setMap(null);
+        }
+        markers = [];
+    }
+
+    function pagination(cities) {
+
+        for (var i = 0; i < cities.length; i++) {
+
+            var theCity = cities[i].name + "";
+            putMarker(theCity);
+
+            var para = document.createElement("p");
+            var node = document.createTextNode(cities[i].name);
+            para.appendChild(node);
+            var element = document.getElementById("cityList");
+            element.appendChild(para);
+        }
+
+        $('#cityList').easyPaginate({
+            paginateElement: 'p',
+            elementsPerPage: 5,
+            effect: 'climb'
+        });
+    }
+
+    var geocoder;
+    var map;
+    var markers = [];
+    function initMap() {
+        geocoder = new google.maps.Geocoder();
+        map = new google.maps.Map(document.getElementById('map'), {
+            center: {lat: 50.50, lng: 50.50},
+            zoom: 2
+        });
+    }
+
+</script>
+
+</html>

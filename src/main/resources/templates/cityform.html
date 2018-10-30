@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Сохранить город</title>
+    <meta charset="utf-8"/>
+    <link type="text/css" rel="stylesheet" th:href="@{/css/style.css}"/>
+    <link type="text/css" rel="stylesheet" th:href="@{/css/add-country-style.css}"/>
+</head>
+
+<body>
+
+<div id="wrapper">
+    <div id="header">
+        <h2>Страны и города</h2>
+    </div>
+</div>
+
+<div id="container">
+    <h3>Сохранить город</h3>
+
+    <form th:action="@{/country/saveCity}" th:object="${city}" method="POST">
+
+        <input type="hidden" th:field="*{id}" />
+
+        <table>
+            <tbody>
+            <tr>
+                <td><label>Название города:</label></td>
+                <td><input th:field="*{name}" /></td>
+            </tr>
+
+            <tr>
+                <td><label></label></td>
+                <td><input type="submit" value="Сохранить" class="save" /></td>
+            </tr>
+
+
+            </tbody>
+        </table>
+
+    </form>
+
+    <p>
+        <a th:href="@{/country/list}">Назад к списку</a>
+    </p>
+
+</div>
+
+</body>
+
+</html>
